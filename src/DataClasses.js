@@ -86,7 +86,8 @@ class DataSelector {
             let matchedNumbers = data.match(/\d+\.\d+/);
             if(matchedNumbers != null) {
                 if(matchedNumbers.length === 1) {
-                    return matchedNumbers[0];
+                    // A match is always a number and can be safely cast.
+                    return Number(matchedNumbers[0]);
                 }
 
                 console.log(`The data selector '${this.name}', using selector '${this.selector}', had multiple decimal values converted to a number.`);
@@ -97,7 +98,8 @@ class DataSelector {
             matchedNumbers = data.match(/\d+/);
             if(matchedNumbers != null) {
                 if(matchedNumbers.length === 1) {
-                    return matchedNumbers[0];
+                    // A match is always a number and can be safely cast.
+                    return Number(matchedNumbers[0]);
                 }
 
                 console.log(`The data selector '${this.name}', using selector '${this.selector}', had multiple values converted to a number.`);
