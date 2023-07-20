@@ -83,9 +83,10 @@ class EnhancedEcommerceService {
      * @param {string} eventName The name of the event.
      * @param {DataSchema} dataSchema The data schema to use.
      * @param {boolean} defaultEcommerceSchema True when the data schema provides only the items. If the ecommerce object needs to have more values this needs to be set to false.
+     * @param {Array} extraEventDataSchemas Extra dataschemas to add to the top object to be on the same level as the ecommerce object.
      */
-    pushEcommerceEvent(eventName, dataSchema, defaultEcommerceSchema = true) {
-        this.privatePushEcommerceEvent(eventName, dataSchema, document, defaultEcommerceSchema);
+    pushEcommerceEvent(eventName, dataSchema, defaultEcommerceSchema = true, extraEventDataSchemas = null) {
+        this.privatePushEcommerceEvent(eventName, dataSchema, document, defaultEcommerceSchema, extraEventDataSchemas);
     }
 
     /**
@@ -94,8 +95,9 @@ class EnhancedEcommerceService {
      * @param {DataSchema} dataSchema The data schema to use.
      * @param {Element} startingElement The element to start from, either document for self pushed events or the event target from click events.
      * @param {boolean} defaultEcommerceSchema True when the data schema provides only the items. If the ecommerce object needs to have more values this needs to be set to false.
+     * @param {Array} extraEventDataSchemas Extra dataschemas to add to the top object to be on the same level as the ecommerce object.
      */
-    privatePushEcommerceEvent(eventName, dataSchema, startingElement, defaultEcommerceSchema) {
+    privatePushEcommerceEvent(eventName, dataSchema, startingElement, defaultEcommerceSchema, extraEventDataSchemas) {
         const data = dataSchema.getData(startingElement);
         
         let eventData = {
@@ -115,6 +117,13 @@ class EnhancedEcommerceService {
 
             eventData[dataSchema.name] = data;
         }
+
+        // If there are extra event data schemas, add these to the top layer of the event object.
+        if (extraEventDataSchemas && extraEventDataSchemas.length > 0) {
+            extraEventDataSchemas.forEach(extraEventDataSchema => {
+                eventData[extraEventDataSchema.name] = extraEventDataSchema.getData(document);
+            });
+        }
         
         // Clear the previous ecommerce object.
         this.privatePushToDataLayer({ ecommerce: null })
@@ -126,9 +135,10 @@ class EnhancedEcommerceService {
      * @param {string} eventName The name of the event to be pushed when clicked.
      * @param {DataSchema} dataSchema The data schema to use.
      * @param {string} initiatorSelector The element that needs to initiate the click event, relative to the data schema item container or the item container if this value is empty.
-     * @param {boolean} stopPropagation If set to true the 'stopPropagation' method of the click event will be called. 
+     * @param {boolean} stopPropagation If set to true the 'stopPropagation' method of the click event will be called.
+     * @param {Array} extraEventDataSchemas Extra dataschemas to add to the top object to be on the same level as the ecommerce object.
      */
-    bindClickEcommerceEvent(eventName, dataSchema, initiatorSelector = "", defaultEcommerceSchema = true, stopPropagation = false) {
+    bindClickEcommerceEvent(eventName, dataSchema, initiatorSelector = "", defaultEcommerceSchema = true, stopPropagation = false, extraEventDataSchemas = null) {
         const initiators = document.querySelectorAll(dataSchema.itemContainerSelector);
         initiators.forEach(initiator => {
             let elementsToBind = [];
@@ -138,7 +148,7 @@ class EnhancedEcommerceService {
                     if(stopPropagation) {
                         event.stopPropagation();
                     }
-                    this.privatePushEcommerceEvent(eventName, dataSchema, elementToBind, defaultEcommerceSchema);
+                    this.privatePushEcommerceEvent(eventName, dataSchema, elementToBind, defaultEcommerceSchema, extraEventDataSchemas);
                 }
                 elementToBind.addEventListener("click", eventListener);
                 this.boundClickEventListeners.push(new BoundEventListener(elementToBind, eventListener, "click"));
