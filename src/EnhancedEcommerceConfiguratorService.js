@@ -119,7 +119,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * Binds the next button (that triggers the errors) if the settings are provided.
      */
     privateBindErrorsOnNext() {
-        if(this.errorEventSettings != null) {
+        if (this.errorEventSettings != null) {
             document.querySelectorAll(this.errorEventSettings.nextButtonSelector).forEach(button => {
                 button.addEventListener("click", () => {
                         setTimeout(() => {
@@ -151,9 +151,9 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {number} currentStep The step moved to.
      */
     privateNextPreviousStep(currentStep) {
-        if(currentStep < this.currentStep) {
+        if (currentStep < this.currentStep) {
             this.privatePushConfiguratorEvent(this.eventNames.previousStep, this.getPathChanged(this.currentStep, currentStep));
-        } else if(currentStep > this.currentStep) {
+        } else if (currentStep > this.currentStep) {
             this.privatePushConfiguratorEvent(this.eventNames.nextStep, this.getPathChanged(this.currentStep, currentStep));
         }
     }
@@ -168,7 +168,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
         // Convert the data to Json to check whether the same event pas been pushed just before to prevent duplicates.
         const eventJson = JSON.stringify(eventSchema.getData(startingElement));
 
-        if(this.lastEvent !== eventJson) {
+        if (this.lastEvent !== eventJson) {
             this._pushCustomEvent(eventName, eventSchema, startingElement);
         }
 
@@ -210,13 +210,13 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      */
     privatePriceCalculated() {
         // When the price has been calculated and a choice was delayed for this, call it.
-        if(this.choiceMadeForPriceCalculated) {
+        if (this.choiceMadeForPriceCalculated) {
             this.choiceMadeForPriceCalculated = false;
             this.privatePushChoiceMade(null);
         }
 
         // When the price has been calculated the first time since the step changed call the step complete.
-        if(this.stepChanged) {
+        if (this.stepChanged) {
             this.stepChanged = false;
             this.privatePushStepComplete(parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]));
         }
@@ -227,7 +227,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {number} currentStep The step that the user is currently on.
      */
     privatePushStepComplete(currentStep) {
-        if(this.currentStep < currentStep) {
+        if (this.currentStep < currentStep) {
             const eventName = this.eventNames.stepComplete.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
             this.privatePushConfiguratorEvent(eventName, this.getStepCompleteSchema(this.currentStep));
         }
@@ -240,7 +240,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @returns Returns if no choice event settings are set.
      */
     privateBindChoices() {
-        if(this.choiceEventSettings == null) {
+        if (this.choiceEventSettings == null) {
             return;
         }
 
@@ -251,7 +251,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
 
         this.boundEventListeners = [];
 
-        if(this.choiceEventSettings.configuratorChoiceSelectors != null && this.choiceEventSettings.configuratorChoiceSelectors.length > 0 && this.choiceEventSettings.getChoiceMadeSchema != null) {
+        if (this.choiceEventSettings.configuratorChoiceSelectors != null && this.choiceEventSettings.configuratorChoiceSelectors.length > 0 && this.choiceEventSettings.getChoiceMadeSchema != null) {
             // Bind event listeners for each configurator choice selector.
             this.choiceEventSettings.configuratorChoiceSelectors.forEach(choiceSelector => {
                 document.querySelectorAll(choiceSelector.selector).forEach(element => {
@@ -262,7 +262,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
             });
         }
 
-        if(this.choiceEventSettings.configuratorInstructionSelectors != null && this.choiceEventSettings.configuratorInstructionSelectors.length > 0 && this.choiceEventSettings.getInstructionSchema != null) {
+        if (this.choiceEventSettings.configuratorInstructionSelectors != null && this.choiceEventSettings.configuratorInstructionSelectors.length > 0 && this.choiceEventSettings.getInstructionSchema != null) {
             // Bind event listeners for each configurator instruction selector.
             this.choiceEventSettings.configuratorInstructionSelectors.forEach(instructionSelector => {
                 document.querySelectorAll(instructionSelector.selector).forEach(element => {

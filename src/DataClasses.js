@@ -1,4 +1,8 @@
-//version = "V 1.2.0" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
+//version = "V 1.3.0 UNRELEASED" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
+
+window.StructuredDataLibrarySettings = {
+    DebugMode: false // When true warnings will be shown in the console if problems occured.
+}
 
 window.InputType = {
     Text: "text",
@@ -33,7 +37,7 @@ class DataSelector {
      * @returns Returns the requested data, null if the data did not satisfy the mandatory settings.
      */
     getData(itemContainer) {
-        if(!this.isCollection) {
+        if (!this.isCollection) {
             const item = this.selector === "" && this.attribute.length > 0 ? itemContainer : itemContainer.querySelector(this.selector);
             return this.privateGetDataFromItem(item);
         }
@@ -43,16 +47,16 @@ class DataSelector {
 
         items.forEach(item => {
             const data = this.privateGetDataFromItem(item);
-            if(data !== null) {
+            if (data !== null) {
                 datas.push(data);
             }
         });
 
-        if(datas.length > 0) {
+        if (datas.length > 0) {
             return datas;
         }
 
-        console.log(`The data selector '${this.name}', using selector '${this.selector}', had no results for the collection.`);
+        if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had no results for the collection.`);
         return null;
     }
 
@@ -62,51 +66,57 @@ class DataSelector {
      * @returns Returns the data, null if the item was not found.
      */
     privateGetDataFromItem(item) {
-        if(item == null) {
-            console.log(`The data selector '${this.name}', using selector '${this.selector}', had no item to retrieve data from.`);
+        if (item == null) {
+            if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had no item to retrieve data from.`);
             return null;
         }
 
-        if(this.inputType === InputType.Image) {
+        if (this.inputType === InputType.Image) {
             return item.src;
-        } else if(this.inputType === InputType.Value) {
+        } else if (this.inputType === InputType.Value) {
             return item.value;
-        } else if(this.inputType === InputType.Url) {
+        } else if (this.inputType === InputType.Url) {
             return item.href;
         }
 
         let data = this.selector.indexOf("[itemprop=") >= 0 ? item.content : this.attribute === "" ? item.innerHTML : item.dataset[this.attribute];
 
-        if(this.inputType === InputType.Text) {
+        if (this.inputType === InputType.Text) {
             return data;
-        } else if(this.inputType === InputType.Number) {
+        } else if (this.inputType === InputType.Number) {
+            // Check if the data is not null or undefined to prevent an exception when trying to replace.
+            if (data == null) {
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had no value converted to a number. The selector had a result but no data could be retrieved from the element.`);
+                return null;
+            }
+
             data = data.replace(",-", "").replace(",", ".");
 
             // Check for a value with numbers behind a digit.
             let matchedNumbers = data.match(/\d+\.\d+/);
-            if(matchedNumbers != null) {
-                if(matchedNumbers.length === 1) {
+            if (matchedNumbers != null) {
+                if (matchedNumbers.length === 1) {
                     // A match is always a number and can be safely cast.
                     return Number(matchedNumbers[0]);
                 }
 
-                console.log(`The data selector '${this.name}', using selector '${this.selector}', had multiple decimal values converted to a number.`);
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had multiple decimal values converted to a number.`);
                 return null;
             }
 
             // Check for a value without a digit.
             matchedNumbers = data.match(/\d+/);
-            if(matchedNumbers != null) {
-                if(matchedNumbers.length === 1) {
+            if (matchedNumbers != null) {
+                if (matchedNumbers.length === 1) {
                     // A match is always a number and can be safely cast.
                     return Number(matchedNumbers[0]);
                 }
 
-                console.log(`The data selector '${this.name}', using selector '${this.selector}', had multiple values converted to a number.`);
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had multiple values converted to a number.`);
                 return null;
             }
 
-            console.log(`The data selector '${this.name}', using selector '${this.selector}', had no value converted to a number.`);
+            if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data selector '${this.name}', using selector '${this.selector}', had no value converted to a number.`);
             return null;
         }
     }
@@ -158,11 +168,11 @@ class DataSchema {
      * @returns Returns the requested data, null if the data did not satisfy the mandatory settings or in case of a collection if no data was found or satisfy the mandatory settings.
      */
     getData(itemContainer) {
-        if(!this.isCollection) {
+        if (!this.isCollection) {
             const innerItemContainer = this.itemContainerSelector === "" ? itemContainer : itemContainer.querySelector(this.itemContainerSelector);
 
-            if(innerItemContainer == null) {
-                console.log(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', did not find an element.`);
+            if (innerItemContainer == null) {
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', did not find an element.`);
                 return null;
             }
 
@@ -174,16 +184,16 @@ class DataSchema {
 
         innerItemContainers.forEach(innerItemContainer => {
             const data = this._getDataFromItemContainer(innerItemContainer);
-            if(data !== null) {
+            if (data !== null) {
                 datas.push(data);
             }
         });
 
-        if(datas.length > 0) {
+        if (datas.length > 0) {
             return datas;
         }
         
-        console.log(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', had no results for the collection.`);
+        if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', had no results for the collection.`);
         return null;
     }
 
@@ -197,38 +207,38 @@ class DataSchema {
         let invalidData = false;
 
         // Get the data from each structured data selector.
-        if(this.dataSelectors !== null) {
+        if (this.dataSelectors !== null) {
             this.dataSelectors.forEach(dataSelector => {
                 const value = dataSelector.getData(itemContainer);
 
-                if(value !== null) {
+                if (value !== null) {
                     data[dataSelector.name] = value;
-                } else if(dataSelector.mandatory) {
+                } else if (dataSelector.mandatory) {
                     invalidData = true;
                 }
             });
         }
 
-        if(invalidData) {
-            console.log(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', missed mandatory data.`);
+        if (invalidData) {
+            if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', missed mandatory data.`);
             return null;
         }
 
         // Get the data from each structured data schema.
-        if(this.dataSchemas !== null) {
+        if (this.dataSchemas !== null) {
             this.dataSchemas.forEach(dataSchema => {
                 const value = dataSchema.getData(itemContainer);
 
-                if(value !== null) {
+                if (value !== null) {
                     data[dataSchema.name] = value;
-                } else if(dataSchema.mandatory) {
+                } else if (dataSchema.mandatory) {
                     invalidData = true;
                 }
             });
         }
 
-        if(invalidData) {
-            console.log(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', missed mandatory schema.`);
+        if (invalidData) {
+            if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`The data schema '${this.name}', using selector '${this.itemContainerSelector}', missed mandatory schema.`);
             return null;
         }
 
