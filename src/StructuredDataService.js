@@ -1,4 +1,4 @@
-//version = "V 1.1.0 UNRELEASED" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
+//version = "V 1.1.0" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
 
 class StructuredDataSchema extends DataSchema {
     /**
