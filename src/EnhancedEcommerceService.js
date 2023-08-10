@@ -44,10 +44,10 @@ class EventDataSchema extends DataSchema {
         const usingItemContainer = itemContainer.closest(this.itemContainerSelector);
         
         if (this.asArray) {
-            return [this._getDataFromItemContainer(usingItemContainer)];
+            return [this.privateGetDataFromItemContainer(usingItemContainer)];
         }
 
-        return this._getDataFromItemContainer(usingItemContainer);
+        return this.privateGetDataFromItemContainer(usingItemContainer);
     }
 }
 
@@ -98,43 +98,47 @@ class EnhancedEcommerceService {
      * @param {Array} extraEventDataSchemas Extra dataschemas to add to the top object to be on the same level as the ecommerce object.
      */
     privatePushEcommerceEvent(eventName, dataSchema, startingElement, defaultEcommerceSchema, extraEventDataSchemas) {
-        const data = dataSchema.getData(startingElement);
-        
-        let eventData = {
-            event: eventName
-        };
-        
-        if (defaultEcommerceSchema){
-            // The items array can include up to 200 elements.
-            if (data != null) {
-                data.length = Math.min(data.length, 200);
-            }
-            eventData.ecommerce = {};
-            eventData.ecommerce["items"] = data || [];
-        } else {
-            if (data == null) {
-                if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`No data was found for the Ecommerce object for '${eventName}'. Cancelling the data layer push.`);
-                return;
+        try {
+            const data = dataSchema.getData(startingElement);
+            
+            let eventData = {
+                event: eventName
+            };
+            
+            if (defaultEcommerceSchema){
+                // The items array can include up to 200 elements.
+                if (data != null) {
+                    data.length = Math.min(data.length, 200);
+                }
+                eventData.ecommerce = {};
+                eventData.ecommerce["items"] = data || [];
+            } else {
+                if (data == null) {
+                    if (window.StructuredDataLibrarySettings.DebugMode) console.warn(`No data was found for the Ecommerce object for '${eventName}'. Cancelling the data layer push.`);
+                    return;
+                }
+
+                // The items array can include up to 200 elements.
+                if (data["items"] != null) {
+                    data["items"].length = Math.min(data["items"].length, 200);
+                }
+
+                eventData[dataSchema.name] = data;
             }
 
-            // The items array can include up to 200 elements.
-            if (data["items"] != null) {
-                data["items"].length = Math.min(data["items"].length, 200);
+            // If there are extra event data schemas, add these to the top layer of the event object.
+            if (extraEventDataSchemas && extraEventDataSchemas.length > 0) {
+                extraEventDataSchemas.forEach(extraEventDataSchema => {
+                    eventData[extraEventDataSchema.name] = extraEventDataSchema.getData(document);
+                });
             }
-
-            eventData[dataSchema.name] = data;
+            
+            // Clear the previous ecommerce object.
+            this.privatePushToDataLayer({ ecommerce: null })
+            this.privatePushToDataLayer(eventData);
+        } catch (error) {
+            console.error(error);
         }
-
-        // If there are extra event data schemas, add these to the top layer of the event object.
-        if (extraEventDataSchemas && extraEventDataSchemas.length > 0) {
-            extraEventDataSchemas.forEach(extraEventDataSchema => {
-                eventData[extraEventDataSchema.name] = extraEventDataSchema.getData(document);
-            });
-        }
-        
-        // Clear the previous ecommerce object.
-        this.privatePushToDataLayer({ ecommerce: null })
-        this.privatePushToDataLayer(eventData);
     }
 
     /**
@@ -146,21 +150,25 @@ class EnhancedEcommerceService {
      * @param {Array} extraEventDataSchemas Extra dataschemas to add to the top object to be on the same level as the ecommerce object.
      */
     bindClickEcommerceEvent(eventName, dataSchema, initiatorSelector = "", defaultEcommerceSchema = true, stopPropagation = false, extraEventDataSchemas = null) {
-        const initiators = document.querySelectorAll(dataSchema.itemContainerSelector);
-        initiators.forEach(initiator => {
-            let elementsToBind = [];
-            initiatorSelector === "" ?  elementsToBind.push(initiator) : elementsToBind = initiator.querySelectorAll(initiatorSelector);
-            elementsToBind.forEach(elementToBind => {
-                const eventListener = (event) => {
-                    if (stopPropagation) {
-                        event.stopPropagation();
+        try {
+            const initiators = document.querySelectorAll(dataSchema.itemContainerSelector);
+            initiators.forEach(initiator => {
+                let elementsToBind = [];
+                initiatorSelector === "" ?  elementsToBind.push(initiator) : elementsToBind = initiator.querySelectorAll(initiatorSelector);
+                elementsToBind.forEach(elementToBind => {
+                    const eventListener = (event) => {
+                        if (stopPropagation) {
+                            event.stopPropagation();
+                        }
+                        this.privatePushEcommerceEvent(eventName, dataSchema, elementToBind, defaultEcommerceSchema, extraEventDataSchemas);
                     }
-                    this.privatePushEcommerceEvent(eventName, dataSchema, elementToBind, defaultEcommerceSchema, extraEventDataSchemas);
-                }
-                elementToBind.addEventListener("click", eventListener);
-                this.boundClickEventListeners.push(new BoundEventListener(elementToBind, eventListener, "click"));
+                    elementToBind.addEventListener("click", eventListener);
+                    this.boundClickEventListeners.push(new BoundEventListener(elementToBind, eventListener, "click"));
+                });
             });
-        });
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -169,7 +177,7 @@ class EnhancedEcommerceService {
      * @param {DataSchema} dataSchema The data schema to use.
      */
     pushCustomEvent(eventName, dataSchema) {
-        this._pushCustomEvent(eventName, dataSchema, document);
+        this.privatePushCustomEvent(eventName, dataSchema, document);
     }
 
     /**
@@ -178,10 +186,14 @@ class EnhancedEcommerceService {
      * @param {DataSchema} dataSchema The data schema to use.
      * @param {Element} startingElement The element to start from, either document for self pushed events or the event target from click events.
      */
-    _pushCustomEvent(eventName, dataSchema, startingElement) {
-        const data = dataSchema.getData(startingElement);
-        const eventData = {event: eventName, ...data};
-        this.privatePushToDataLayer(eventData);
+    privatePushCustomEvent(eventName, dataSchema, startingElement) {
+        try {
+            const data = dataSchema.getData(startingElement);
+            const eventData = {event: eventName, ...data};
+            this.privatePushToDataLayer(eventData);
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -192,21 +204,25 @@ class EnhancedEcommerceService {
      * @param {boolean} stopPropagation If set to true the 'stopPropagation' method of the click event will be called. 
      */
     bindClickCustomEvent(eventName, dataSchema, initiatorSelector = "", stopPropagation = false) {
-        const initiators = document.querySelectorAll(dataSchema.itemContainerSelector);
-        initiators.forEach(initiator => {
-            let elementsToBind = [];
-            initiatorSelector === "" ?  elementsToBind.push(initiator) : elementsToBind = initiator.querySelectorAll(initiatorSelector);
-            elementsToBind.forEach(elementToBind => {
-                const eventListener = (event) => {
-                    if (stopPropagation) {
-                        event.stopPropagation();
+        try {
+            const initiators = document.querySelectorAll(dataSchema.itemContainerSelector);
+            initiators.forEach(initiator => {
+                let elementsToBind = [];
+                initiatorSelector === "" ?  elementsToBind.push(initiator) : elementsToBind = initiator.querySelectorAll(initiatorSelector);
+                elementsToBind.forEach(elementToBind => {
+                    const eventListener = (event) => {
+                        if (stopPropagation) {
+                            event.stopPropagation();
+                        }
+                        this.privatePushCustomEvent(eventName, dataSchema, elementToBind);
                     }
-                    this._pushCustomEvent(eventName, dataSchema, elementToBind);
-                }
-                elementToBind.addEventListener("click", eventListener);
-                this.boundClickEventListeners.push(new BoundEventListener(elementToBind, eventListener, "click"));
+                    elementToBind.addEventListener("click", eventListener);
+                    this.boundClickEventListeners.push(new BoundEventListener(elementToBind, eventListener, "click"));
+                });
             });
-        });
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -225,11 +241,15 @@ class EnhancedEcommerceService {
      * Remove all event listeners that have been bound for clicks using the bind functions of this Enhanced Ecommerce object.
      */
     removeAllBoundClicks() {
-        this.boundClickEventListeners.forEach(boundClickEventListener => {
-            boundClickEventListener.removeEvent();
-        });
+        try {
+            this.boundClickEventListeners.forEach(boundClickEventListener => {
+                boundClickEventListener.removeEvent();
+            });
 
-        this.boundClickEventListeners = [];
+            this.boundClickEventListeners = [];
+        } catch (error) {
+            console.error(error);
+        }
     }
 }
 

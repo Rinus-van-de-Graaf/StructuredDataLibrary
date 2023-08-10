@@ -176,14 +176,14 @@ class DataSchema {
                 return null;
             }
 
-            return this._getDataFromItemContainer(innerItemContainer);
+            return this.privateGetDataFromItemContainer(innerItemContainer);
         }
 
         const innerItemContainers = itemContainer.querySelectorAll(this.itemContainerSelector);
         let datas = [];
 
         innerItemContainers.forEach(innerItemContainer => {
-            const data = this._getDataFromItemContainer(innerItemContainer);
+            const data = this.privateGetDataFromItemContainer(innerItemContainer);
             if (data !== null) {
                 datas.push(data);
             }
@@ -202,7 +202,7 @@ class DataSchema {
      * @param {Element} itemContainer The item container within to search the data.
      * @returns Returns the requested data, null if the data did not satisfy the mandatory settings.
      */
-    _getDataFromItemContainer(itemContainer) {
+    privateGetDataFromItemContainer(itemContainer) {
         let data = {};
         let invalidData = false;
 

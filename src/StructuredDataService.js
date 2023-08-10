@@ -21,8 +21,8 @@ class StructuredDataSchema extends DataSchema {
      * @param {Element} itemContainer The item container within to search the data.
      * @returns Returns the requested data, null if the data did not satisfy the mandatory settings.
      */
-    _getDataFromItemContainer(itemContainer) {
-        const data = super._getDataFromItemContainer(itemContainer);
+    privateGetDataFromItemContainer(itemContainer) {
+        const data = super.privateGetDataFromItemContainer(itemContainer);
 
         if (data === null) {
             return data;
@@ -39,13 +39,18 @@ class StructuredDataService {
      * @returns Returns the structured data, null if the data did not satisfy the mandatory settings.
      */
     generateStructuredData(structuredDataScheme) {
-        const structuredData = structuredDataScheme.getData(document);
-        if (structuredData === null) {
-            if (window.StructuredDataLibrarySettings.DebugMode) console.warn("Structured data failed to generate.");
+        try {
+            const structuredData = structuredDataScheme.getData(document);
+            if (structuredData === null) {
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn("Structured data failed to generate.");
+                return null;
+            }
+
+            return {"@context": "https://schema.org", ...structuredData};
+        } catch (error) {
+            console.error(error);
             return null;
         }
-
-        return {"@context": "https://schema.org", ...structuredData};
     }
 
     /**
@@ -54,15 +59,19 @@ class StructuredDataService {
      * @returns Ignores the structured data if it is null.
      */
     addStructuredDataToHead(structuredData) {
-        if (structuredData === null) {
-            if (window.StructuredDataLibrarySettings.DebugMode) console.warn("Provided structured data was null, could not add to header.");
-            return;
-        }
+        try {
+            if (structuredData === null) {
+                if (window.StructuredDataLibrarySettings.DebugMode) console.warn("Provided structured data was null, could not add to header.");
+                return;
+            }
 
-        const script = document.createElement('script');
-        script.setAttribute('type', 'application/ld+json');
-        script.textContent = JSON.stringify(structuredData, null, 2);
-        document.head.appendChild(script);
+            const script = document.createElement('script');
+            script.setAttribute('type', 'application/ld+json');
+            script.textContent = JSON.stringify(structuredData, null, 2);
+            document.head.appendChild(script);
+        } catch (error) {
+            console.error(error);
+        }
     }
 }
 

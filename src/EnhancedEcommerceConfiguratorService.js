@@ -91,7 +91,11 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
             choicesMade: "Keuzes stap {currentStep} - {configuratorType}"
         };
 
-        this.privateInit();
+        try {
+            this.privateInit();
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     privateInit() {
@@ -119,18 +123,22 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * Binds the next button (that triggers the errors) if the settings are provided.
      */
     privateBindErrorsOnNext() {
-        if (this.errorEventSettings != null) {
-            document.querySelectorAll(this.errorEventSettings.nextButtonSelector).forEach(button => {
-                button.addEventListener("click", () => {
-                        setTimeout(() => {
-                        const errorEventSchemas = this.errorEventSettings.getErrorSchemas(this.currentStep, this.configuratorType);
-                        // Delay a fraction to let the default functionality run first to make sure all errors are on the page.
-                        errorEventSchemas.forEach(schema => {
-                            this.privatePushConfiguratorEvent(this.eventNames.errorMessage, schema);
-                        });
-                    }, 100);
+        try {
+            if (this.errorEventSettings != null) {
+                document.querySelectorAll(this.errorEventSettings.nextButtonSelector).forEach(button => {
+                    button.addEventListener("click", () => {
+                            setTimeout(() => {
+                            const errorEventSchemas = this.errorEventSettings.getErrorSchemas(this.currentStep, this.configuratorType);
+                            // Delay a fraction to let the default functionality run first to make sure all errors are on the page.
+                            errorEventSchemas.forEach(schema => {
+                                this.privatePushConfiguratorEvent(this.eventNames.errorMessage, schema);
+                            });
+                        }, 100);
+                    });
                 });
-            });
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -139,11 +147,15 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * It will call the virtual pageview and next/previous step events.
      */
     privateStepChanged() {
-        this.stepChanged = true;
-        const currentStep = parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]);
-        this.privatePushVirtualPageview(currentStep);
-        this.privateNextPreviousStep(currentStep);
-        this.privateBindErrorsOnNext();
+        try {
+            this.stepChanged = true;
+            const currentStep = parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]);
+            this.privatePushVirtualPageview(currentStep);
+            this.privateNextPreviousStep(currentStep);
+            this.privateBindErrorsOnNext();
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -151,10 +163,14 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {number} currentStep The step moved to.
      */
     privateNextPreviousStep(currentStep) {
-        if (currentStep < this.currentStep) {
-            this.privatePushConfiguratorEvent(this.eventNames.previousStep, this.getPathChanged(this.currentStep, currentStep));
-        } else if (currentStep > this.currentStep) {
-            this.privatePushConfiguratorEvent(this.eventNames.nextStep, this.getPathChanged(this.currentStep, currentStep));
+        try {
+            if (currentStep < this.currentStep) {
+                this.privatePushConfiguratorEvent(this.eventNames.previousStep, this.getPathChanged(this.currentStep, currentStep));
+            } else if (currentStep > this.currentStep) {
+                this.privatePushConfiguratorEvent(this.eventNames.nextStep, this.getPathChanged(this.currentStep, currentStep));
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -165,14 +181,18 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {Element} startingElement The element to start the schema from.
      */
     privatePushConfiguratorEvent(eventName, eventSchema, startingElement = document) {
-        // Convert the data to Json to check whether the same event pas been pushed just before to prevent duplicates.
-        const eventJson = JSON.stringify(eventSchema.getData(startingElement));
+        try {
+            // Convert the data to Json to check whether the same event pas been pushed just before to prevent duplicates.
+            const eventJson = JSON.stringify(eventSchema.getData(startingElement));
 
-        if (this.lastEvent !== eventJson) {
-            this._pushCustomEvent(eventName, eventSchema, startingElement);
+            if (this.lastEvent !== eventJson) {
+                this.privatePushCustomEvent(eventName, eventSchema, startingElement);
+            }
+
+            this.lastEvent = eventJson;
+        } catch (error) {
+            console.error(error);
         }
-
-        this.lastEvent = eventJson;
     }
 
     /**
@@ -181,10 +201,14 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * It will call the virtual pageview, step complete and next/previous step events.
      */
     privateSummaryLoaded() {
-        this.privatePushVirtualPageview(this.currentStep + 1);
-        this.privateNextPreviousStep(this.currentStep + 1);
-        this.privatePushStepComplete(this.currentStep + 1);
-        this.privatePushConfiguratorEvent(this.eventNames.summary, this.getSummarySchema());
+        try {
+            this.privatePushVirtualPageview(this.currentStep + 1);
+            this.privateNextPreviousStep(this.currentStep + 1);
+            this.privatePushStepComplete(this.currentStep + 1);
+            this.privatePushConfiguratorEvent(this.eventNames.summary, this.getSummarySchema());
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -192,8 +216,12 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * It will push the add to basket event.
      */
     privateAddedToBasket() {
-        const eventName = this.eventNames.addedToBasket.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
-        this.privatePushConfiguratorEvent(eventName, this.getAddToBasketSchema(this.currentStep));
+        try {
+            const eventName = this.eventNames.addedToBasket.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
+            this.privatePushConfiguratorEvent(eventName, this.getAddToBasketSchema(this.currentStep));
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -227,12 +255,16 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {number} currentStep The step that the user is currently on.
      */
     privatePushStepComplete(currentStep) {
-        if (this.currentStep < currentStep) {
-            const eventName = this.eventNames.stepComplete.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
-            this.privatePushConfiguratorEvent(eventName, this.getStepCompleteSchema(this.currentStep));
-        }
+        try {
+            if (this.currentStep < currentStep) {
+                const eventName = this.eventNames.stepComplete.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
+                this.privatePushConfiguratorEvent(eventName, this.getStepCompleteSchema(this.currentStep));
+            }
 
-        this.currentStep = currentStep;
+            this.currentStep = currentStep;
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -244,35 +276,39 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
             return;
         }
 
-        // Remove all event listeners that have been bound for the choices, otherwise it will keep adding event listeners.
-        this.boundEventListeners.forEach(boundEventListener => {
-            boundEventListener.removeEvent();
-        });
-
-        this.boundEventListeners = [];
-
-        if (this.choiceEventSettings.configuratorChoiceSelectors != null && this.choiceEventSettings.configuratorChoiceSelectors.length > 0 && this.choiceEventSettings.getChoiceMadeSchema != null) {
-            // Bind event listeners for each configurator choice selector.
-            this.choiceEventSettings.configuratorChoiceSelectors.forEach(choiceSelector => {
-                document.querySelectorAll(choiceSelector.selector).forEach(element => {
-                    const event = choiceSelector.onPriceCalculated ? this.privatePushChoiceMadeDelayed.bind(this) : this.privatePushChoiceMade.bind(this);
-                    element.addEventListener(choiceSelector.eventType, event);
-                    this.boundEventListeners.push(new BoundEventListener(element, event, choiceSelector.eventType));
-                });
+        try {
+            // Remove all event listeners that have been bound for the choices, otherwise it will keep adding event listeners.
+            this.boundEventListeners.forEach(boundEventListener => {
+                boundEventListener.removeEvent();
             });
-        }
 
-        if (this.choiceEventSettings.configuratorInstructionSelectors != null && this.choiceEventSettings.configuratorInstructionSelectors.length > 0 && this.choiceEventSettings.getInstructionSchema != null) {
-            // Bind event listeners for each configurator instruction selector.
-            this.choiceEventSettings.configuratorInstructionSelectors.forEach(instructionSelector => {
-                document.querySelectorAll(instructionSelector.selector).forEach(element => {
-                    const event = () => {
-                        this.privatePushConfiguratorEvent(this.eventNames.informationIcon, this.choiceEventSettings.getInstructionSchema(this.currentStep, this.configuratorType, element));
-                    };
-                    element.addEventListener(instructionSelector.eventType, event);
-                    this.boundEventListeners.push(new BoundEventListener(element, event, instructionSelector.eventType));
+            this.boundEventListeners = [];
+
+            if (this.choiceEventSettings.configuratorChoiceSelectors != null && this.choiceEventSettings.configuratorChoiceSelectors.length > 0 && this.choiceEventSettings.getChoiceMadeSchema != null) {
+                // Bind event listeners for each configurator choice selector.
+                this.choiceEventSettings.configuratorChoiceSelectors.forEach(choiceSelector => {
+                    document.querySelectorAll(choiceSelector.selector).forEach(element => {
+                        const event = choiceSelector.onPriceCalculated ? this.privatePushChoiceMadeDelayed.bind(this) : this.privatePushChoiceMade.bind(this);
+                        element.addEventListener(choiceSelector.eventType, event);
+                        this.boundEventListeners.push(new BoundEventListener(element, event, choiceSelector.eventType));
+                    });
                 });
-            });
+            }
+
+            if (this.choiceEventSettings.configuratorInstructionSelectors != null && this.choiceEventSettings.configuratorInstructionSelectors.length > 0 && this.choiceEventSettings.getInstructionSchema != null) {
+                // Bind event listeners for each configurator instruction selector.
+                this.choiceEventSettings.configuratorInstructionSelectors.forEach(instructionSelector => {
+                    document.querySelectorAll(instructionSelector.selector).forEach(element => {
+                        const event = () => {
+                            this.privatePushConfiguratorEvent(this.eventNames.informationIcon, this.choiceEventSettings.getInstructionSchema(this.currentStep, this.configuratorType, element));
+                        };
+                        element.addEventListener(instructionSelector.eventType, event);
+                        this.boundEventListeners.push(new BoundEventListener(element, event, instructionSelector.eventType));
+                    });
+                });
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -281,8 +317,12 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * @param {Event} event The event that called this function. Can be null when delayed.
      */
     privatePushChoiceMade(event) {
-        const eventName = this.eventNames.choicesMade.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
-        this.privatePushConfiguratorEvent(eventName, this.choiceEventSettings.getChoiceMadeSchema(this.currentStep, event == null ? null : event.currentTarget));
+        try {
+            const eventName = this.eventNames.choicesMade.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
+            this.privatePushConfiguratorEvent(eventName, this.choiceEventSettings.getChoiceMadeSchema(this.currentStep, event == null ? null : event.currentTarget));
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     /**
