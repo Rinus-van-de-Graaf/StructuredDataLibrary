@@ -1,4 +1,4 @@
-//version = "V 1.3.0" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
+//version = "V 1.4.0" Add UNRELEASED if the current version is not yet published to the CDN. When releasing remove UNRELEASED.
 
 window.StructuredDataLibrarySettings = {
     DebugMode: false // When true warnings will be shown in the console if problems occured.
@@ -176,14 +176,14 @@ class DataSchema {
                 return null;
             }
 
-            return this._getDataFromItemContainer(innerItemContainer);
+            return this.privateGetDataFromItemContainer(innerItemContainer);
         }
 
         const innerItemContainers = itemContainer.querySelectorAll(this.itemContainerSelector);
         let datas = [];
 
         innerItemContainers.forEach(innerItemContainer => {
-            const data = this._getDataFromItemContainer(innerItemContainer);
+            const data = this.privateGetDataFromItemContainer(innerItemContainer);
             if (data !== null) {
                 datas.push(data);
             }
@@ -202,7 +202,7 @@ class DataSchema {
      * @param {Element} itemContainer The item container within to search the data.
      * @returns Returns the requested data, null if the data did not satisfy the mandatory settings.
      */
-    _getDataFromItemContainer(itemContainer) {
+    privateGetDataFromItemContainer(itemContainer) {
         let data = {};
         let invalidData = false;
 
