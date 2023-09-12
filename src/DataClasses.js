@@ -93,7 +93,7 @@ class DataSelector {
             data = data.replace(",-", "").replace(",", ".");
 
             // Check for a value with numbers behind a digit.
-            let matchedNumbers = data.match(/\d+\.\d+/);
+            let matchedNumbers = data.match(/-?\d+\.\d+/);
             if (matchedNumbers != null) {
                 if (matchedNumbers.length === 1) {
                     // A match is always a number and can be safely cast.
@@ -105,7 +105,7 @@ class DataSelector {
             }
 
             // Check for a value without a digit.
-            matchedNumbers = data.match(/\d+/);
+            matchedNumbers = data.match(/-?\d+/);
             if (matchedNumbers != null) {
                 if (matchedNumbers.length === 1) {
                     // A match is always a number and can be safely cast.
