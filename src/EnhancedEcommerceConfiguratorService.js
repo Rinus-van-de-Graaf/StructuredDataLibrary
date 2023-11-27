@@ -84,9 +84,9 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
             nextStep: "Volgende stap",
             previousStep: "Vorige stap",
             summary: "Samenvatting",
-            addedToBasket: "Stap {currentStep} afgerond - {configuratorType}",
+            addedToBasket: "Stap {currentStep} afgerond - {stepName}",
             virtualPageview: "VirtualPageview",
-            stepComplete: "Stap {currentStep} afgerond - {configuratorType}",
+            stepComplete: "Stap {currentStep} afgerond - {stepName}",
             informationIcon: "Informatie icoon",
             choicesMade: "Keuzes stap {currentStep} - {configuratorType}"
         };
@@ -116,6 +116,12 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
         document.addEventListener("jconfiguratorSummaryLoaded", this.privateSummaryLoaded.bind(this));
         document.addEventListener("jconfiguratorAddToBasket", this.privateAddedToBasket.bind(this));
         document.addEventListener("jconfiguratorAfterCalculateTotalPrice", this.privatePriceCalculated.bind(this));
+        document.addEventListener("jconfiguratorNextMainStep", this.privateNextMainStep.bind(this));
+    }
+
+    privateNextMainStep() {
+        console.log('EECS: privateNextMainStep');
+        this.privatePushStepComplete(parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]) + 1);
     }
 
     /**
@@ -217,7 +223,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      */
     privateAddedToBasket() {
         try {
-            const eventName = this.eventNames.addedToBasket.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
+            const eventName = this.eventNames.addedToBasket.replace("{currentStep}", this.currentStep).replace("{stepName}", jjl.configurator.base.getCurrentStep().parent.name);
             this.privatePushConfiguratorEvent(eventName, this.getAddToBasketSchema(this.currentStep));
         } catch (error) {
             console.error(error);
@@ -257,7 +263,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
     privatePushStepComplete(currentStep) {
         try {
             if (this.currentStep < currentStep) {
-                const eventName = this.eventNames.stepComplete.replace("{currentStep}", this.currentStep).replace("{configuratorType}", this.configuratorType);
+                const eventName = this.eventNames.stepComplete.replace("{currentStep}", this.currentStep).replace("{stepName}", jjl.configurator.base.getCurrentStep().parent.name);
                 this.privatePushConfiguratorEvent(eventName, this.getStepCompleteSchema(this.currentStep));
             }
 
