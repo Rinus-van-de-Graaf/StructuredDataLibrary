@@ -84,7 +84,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
             nextStep: "Volgende stap",
             previousStep: "Vorige stap",
             summary: "Samenvatting",
-            addedToBasket: "Stap {currentStep} afgerond - {stepName}",
+            addedToBasket: "add_to_cart",
             virtualPageview: "VirtualPageview",
             stepComplete: "Stap {currentStep} afgerond - {stepName}",
             informationIcon: "Informatie icoon",
@@ -113,7 +113,10 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
         document.addEventListener("jconfiguratorStepLoaded", this.privateStepChanged.bind(this));
         document.addEventListener("jconfiguratorStepRendered", this.privateBindChoices.bind(this));
         document.addEventListener("jconfiguratorSubStepRendered", this.privateBindChoices.bind(this));
-        document.addEventListener("jconfiguratorSummaryLoaded", this.privateSummaryLoaded.bind(this));
+        
+        // Event jconfiguratorSummaryLoaded doesn't work, because this is called several times when the summary is loaded.
+        document.addEventListener("jconfiguratorStepLoaded", this.privateSummaryLoaded.bind(this));
+        
         document.addEventListener("jconfiguratorAddToBasket", this.privateAddedToBasket.bind(this));
         document.addEventListener("jconfiguratorAfterCalculateTotalPrice", this.privatePriceCalculated.bind(this));
         document.addEventListener("jconfiguratorNextMainStep", this.privateNextMainStep.bind(this));
@@ -207,11 +210,12 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      * It will call the virtual pageview, step complete and next/previous step events.
      */
     privateSummaryLoaded() {
-        try {
-            this.privatePushVirtualPageview(this.currentStep + 1);
-            this.privateNextPreviousStep(this.currentStep + 1);
-            this.privatePushStepComplete(this.currentStep + 1);
-            this.privatePushConfiguratorEvent(this.eventNames.summary, this.getSummarySchema());
+        try {            
+            const currentStep = parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]);
+            if (currentStep === _.size(jjl.configurator.mainSteps)) {
+                this.privateNextPreviousStep(this.currentStep + 1);
+                this.privatePushConfiguratorEvent(this.eventNames.summary, this.getSummarySchema());    
+            }
         } catch (error) {
             console.error(error);
         }
@@ -223,7 +227,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
      */
     privateAddedToBasket() {
         try {
-            const eventName = this.eventNames.addedToBasket.replace("{currentStep}", this.currentStep).replace("{stepName}", jjl.configurator.base.getCurrentStep().parent.name);
+            const eventName = this.eventNames.addedToBasket;
             this.privatePushConfiguratorEvent(eventName, this.getAddToBasketSchema(this.currentStep));
         } catch (error) {
             console.error(error);
@@ -247,13 +251,7 @@ class EnhancedEcommerceConfiguratorService extends EnhancedEcommerceService {
         if (this.choiceMadeForPriceCalculated) {
             this.choiceMadeForPriceCalculated = false;
             this.privatePushChoiceMade(null);
-        }
-
-        // When the price has been calculated the first time since the step changed call the step complete.
-        if (this.stepChanged) {
-            this.stepChanged = false;
-            this.privatePushStepComplete(parseInt((new URLSearchParams(window.location.search)).get("confloc").split("-")[0]));
-        }
+        }        
     }
 
     /**
